@@ -1,0 +1,93 @@
+#!/usr/bin/ruby
+
+# == Synopsis
+#
+#   A simple fact-keeping application.
+#
+# == Usage
+#
+#   Normal usage is as follows:
+#
+#     facts <action> <mode> <arg> [, <arg> [, <arg> ...]]
+#
+#   See the examples section for detailed usage on how to perform the various 
+#   actions.
+#
+# == Options
+#
+# === Actions
+#   -e, --edit       Edit, for changing category names or fact content
+#   -m, --move       Move, for moving categories and facts between categories
+#   -n, --new        Create, for adding new categories and facts
+#   -q, --query      Query, for querying categories and facts
+#
+# === Modes
+#   -c, --category   Carries out an action on a category
+#   -f, --fact       Carries out an action on a fact
+#
+# === Miscellaneous
+#   -h, --help       Displays help message
+#   -p, --parent     Specifies that a new category should have a parent
+#   -V, --verbose    Starts the program in verbose modew
+#   -v, --version    Displays version
+#
+# == Examples
+#
+# === Query
+#   * Query for category information matching a specific pattern:
+#
+#       facts -qc ruby
+#
+#       facts -qfc apple (include facts in those categories)
+#
+#   * Query for facts that have content matching a specific pattern:
+#
+#       facts -qf "warren buffett"
+#
+#   * Multiple patterns can be specified and will be treated as logical AND:
+#
+#       facts -qf apple "steve jobs"
+#
+# === New
+#   * Create a top-level category:
+#
+#       facts -nc "Politics"
+#
+#   * Create a new child category by specifying a unique query for some parent 
+#     category as the first argument (the -p switch lets the application know 
+#     to expect a parent category first):
+#
+#       facts -npc "politics" "The Senate"
+#
+#   * Multiple new categories can be created at once:
+#
+#       facts -npc "politics" "Canadian Politics" "American Politics" ...
+#
+#   * Facts can be created in a similar manner:
+#
+#       facts -nf "politics" "Politicians are crooks"
+#
+# === Edit
+#
+# === Move
+#   * Move one category to another (all arguments should be queries that will 
+#     match only a single category):
+#
+#       facts -mc "dinosaurs" "zoology"
+#
+#   * Many categories can be moved at once, just keep in mind that the last 
+#     argument is always the destination:
+#
+#       facts -mc "biology" "physics" ... "science"
+#
+#   * Facts are moved in the same fashion:
+#
+#       facts -mf "biology is the study of" biology
+#
+# == Author
+#
+#   Brandur Leach (brandur@mutelight.org)
+#
+
+require 'rubygems'
+require 'lib/facts_client'
