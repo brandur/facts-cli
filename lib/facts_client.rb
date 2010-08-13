@@ -38,22 +38,45 @@ class FactsClient
       else
         #output_help
       end
-    rescue ImpreciseQueryError
+    rescue ImpreciseQueryError, NoEditorError
       $stderr.puts "#{$!}"
     end
   end
 
   private
 
+  def edit_in_temp_file(str)
+    temp_path = ''
+    Tempfile.open('facts') do |f|
+      f.puts str
+      temp_path = f.path
+    end
+    if ENV['EDITOR'].nil? || ENV['EDITOR'].strip.empty?
+      raise NoEditorError, 'please set $EDITOR'
+    end
+    system("#{ENV['EDITOR']} #{temp_path}")
+    IO.read(temp_path).strip
+  end
+
   def edit_category
     category = search_one_category(@arguments.first)
-    update_category(category.db_id, @arguments.last, category.parent_id)
+    if @arguments.count == 1
+      name = edit_in_temp_file(category.name)
+    else
+      name = @arguments.last
+    end
+    update_category(category.db_id, name, category.parent_id)
     puts 'OK'
   end
 
   def edit_fact
     fact = search_one_fact(@arguments.first)
-    update_fact(fact.db_id, @arguments.last, fact.category_id)
+    if @arguments.count == 1
+      content = edit_in_temp_file(fact.content)
+    else
+      content = @arguments.last
+    end
+    update_fact(fact.db_id, content, fact.category_id)
     puts 'OK'
   end
 
@@ -168,6 +191,7 @@ class FactsClient
 
   def search_one_category(query, include_facts = false)
     categories = search_one_or_more_categories(query, include_facts)
+    categories = categories.find_all{ |c| c.db_id == query || c.name == query }
     if categories.count > 1
       raise ImpreciseQueryError, "more than one category match for query '#{query}'"
     end
@@ -188,6 +212,7 @@ class FactsClient
 
   def search_one_fact(query)
     facts = search_one_or_more_facts(query)
+    facts = facts.find_all{ |c| c.db_id == query || c.content == query }
     if facts.count > 1
       raise ImpreciseQueryError, "more than one fact match for query '#{query}'"
     end
@@ -211,14 +236,17 @@ class FactsClient
     elsif !@options.category && !@options.fact
       $stderr.puts 'A mode must be specified (e.g. category or fact)'
       false
+    elsif @options.interactive && get_editor.empty?
+      $stderr.puts '$EDITOR must be set for interactive run'
+      false
     elsif @options.query && @arguments.count > 1
       $stderr.puts 'Query only supports a single argument'
       false
     elsif @options.new && @arguments.count < 2 && @options.category && @options.parent
       $stderr.puts 'New action must have at least two arguments'
       false
-    elsif @options.edit && @arguments.count != 2
-      $stderr.puts 'Edit takes exactly two arguments'
+    elsif @options.edit && @arguments.count != 1 && @arguments.count != 2
+      $stderr.puts 'Edit takes exactly one or two arguments'
       false
     elsif @options.move && @arguments.count < 2
       $stderr.puts 'Move action must have at least two arguments'
@@ -238,22 +266,25 @@ class FactsClient
 
   def parsed_options?
     opts = OptionParser.new
-    opts.on('-c', '--category')   { @options.category = true }
-    opts.on('-e', '--edit')       { @options.edit = true }
-    opts.on('-f', '--fact')       { @options.fact = true }
-    opts.on('-h', '--help')       { output_help }
-    opts.on('-m', '--move')       { @options.move = true }
-    opts.on('-n', '--new')        { @options.new = true }
-    opts.on('-p', '--parent')     { @options.parent = true }
-    opts.on('-q', '--query')      { @options.query = true }
-    opts.on('-V', '--verbose')    { @options.verbose = true }
-    opts.on('-v', '--version')    { output_version ; exit 0 }
+    opts.on('-c', '--category')    { @options.category = true }
+    opts.on('-e', '--edit')        { @options.edit = true }
+    opts.on('-f', '--fact')        { @options.fact = true }
+    opts.on('-h', '--help')        { output_help }
+    opts.on('-m', '--move')        { @options.move = true }
+    opts.on('-n', '--new')         { @options.new = true }
+    opts.on('-p', '--parent')      { @options.parent = true }
+    opts.on('-q', '--query')       { @options.query = true }
+    opts.on('-V', '--verbose')     { @options.verbose = true }
+    opts.on('-v', '--version')     { output_version ; exit 0 }
 
     opts.parse!(@arguments) rescue return false
     true
   end
 
   class ImpreciseQueryError < RuntimeError
+  end
+
+  class NoEditorError < RuntimeError
   end
 end
 
