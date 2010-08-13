@@ -26,13 +26,17 @@ class FactsClient
           new_categories
         elsif @options.new && @options.fact
           new_facts
+        elsif @options.edit && @options.category
+          edit_category
+        elsif @options.edit && @options.fact
+          edit_fact
         elsif @options.move && @options.category
           move_categories
         elsif @options.move && @options.fact
           move_facts
         end
       else
-        output_help
+        #output_help
       end
     rescue ImpreciseQueryError
       $stderr.puts "#{$!}"
@@ -40,6 +44,18 @@ class FactsClient
   end
 
   private
+
+  def edit_category
+    category = search_one_category(@arguments.first)
+    update_category(category.db_id, @arguments.last, category.parent_id)
+    puts 'OK'
+  end
+
+  def edit_fact
+    fact = search_one_fact(@arguments.first)
+    update_fact(fact.db_id, @arguments.last, fact.category_id)
+    puts 'OK'
+  end
 
   def move_categories
     destination = search_one_category(@arguments.last)
@@ -189,7 +205,7 @@ class FactsClient
   # Command/argument ----
 
   def arguments_valid?
-    if !@options.query && !@options.new && !@options.move
+    if !@options.query && !@options.new && !@options.edit && !@options.move
       $stderr.puts 'An action must be specificied (e.g. query, new, ..)'
       false
     elsif !@options.category && !@options.fact
@@ -200,6 +216,9 @@ class FactsClient
       false
     elsif @options.new && @arguments.count < 2 && @options.category && @options.parent
       $stderr.puts 'New action must have at least two arguments'
+      false
+    elsif @options.edit && @arguments.count != 2
+      $stderr.puts 'Edit takes exactly two arguments'
       false
     elsif @options.move && @arguments.count < 2
       $stderr.puts 'Move action must have at least two arguments'
