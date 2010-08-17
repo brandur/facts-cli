@@ -36,6 +36,10 @@ class FactsClient
           move_categories
         elsif @options.move && @options.fact
           move_facts
+        elsif @options.destroy && @options.category
+          destroy_categories
+        elsif @options.destroy && @options.fact
+          destroy_facts
         end
       else
         #output_help
@@ -52,6 +56,7 @@ class FactsClient
   def arguments_parsed?
     opts = OptionParser.new
     opts.on('-c', '--category')    { @options.category = true }
+    opts.on('-d', '--destroy')     { @options.destroy = true }
     opts.on('-e', '--edit')        { @options.edit = true }
     opts.on('-f', '--fact')        { @options.fact = true }
     opts.on('-h', '--help')        { output_help }
@@ -67,7 +72,7 @@ class FactsClient
   end
 
   def arguments_valid?
-    if !@options.query && !@options.new && !@options.edit && !@options.move
+    if !@options.query && !@options.new && !@options.edit && !@options.move && !@options.destroy
       $stderr.puts 'An action must be specificied (e.g. query, new, ..)'
       false
     elsif !@options.category && !@options.fact
@@ -85,9 +90,28 @@ class FactsClient
     elsif @options.move && @arguments.count < 2
       $stderr.puts 'Move action must have at least two arguments'
       false
+    elsif @options.destroy && @arguments.count < 1
+      $stderr.puts 'Destroy action must have at least one argument'
+      false
     else
       true
     end
+  end
+
+  def destroy_categories
+    @arguments.each do |c|
+      category = Category.search_one(c)
+      category.destroy
+    end
+    puts 'OK'
+  end
+
+  def destroy_facts
+    @arguments.each do |f|
+      fact = Fact.search_one(f)
+      fact.destroy
+    end
+    puts 'OK'
   end
 
   def edit_category

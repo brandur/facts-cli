@@ -36,6 +36,10 @@ module RestfulRecord
     end
   end
 
+  def destroy
+    RestHelper.delete("/#{resource_name}/#{id}.json")
+  end
+
   def initialize(attributes)
     update_attributes(attributes) if attributes
   end

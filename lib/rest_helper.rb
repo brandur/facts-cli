@@ -3,6 +3,10 @@ class RestHelper
   FactsUri = 'http://localhost:3000'
 
   class << self
+    def delete(relative_uri)
+      parse(RestClient.delete("#{FactsUri}#{relative_uri}"))
+    end
+
     def get(relative_uri, params = {})
       parse(RestClient.get("#{FactsUri}#{relative_uri}", :params => params))
     end
