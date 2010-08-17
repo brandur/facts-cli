@@ -18,7 +18,8 @@ module RestfulRecord
     end
 
     def search(query, options = {})
-      RestHelper.get("/#{resource_name}/search.json", :query => query).collect{ |r| new(r) }
+      options = options.merge(:query => query)
+      RestHelper.get("/#{resource_name}/search.json", options).collect{ |r| new(r) }
     end
 
     def search_one(query, options = {})

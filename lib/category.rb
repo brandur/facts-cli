@@ -6,10 +6,6 @@ class Category
   attr_accessor :category_id, :name, :slug
   resource_named :categories
 
-  def self.search(query, options = {})
-    RestHelper.get("/#{resource_name}/search.json", :query => query, :include_facts => options[:include_facts]).collect{ |r| new(r) }
-  end
-
   def facts
     @facts
   end
