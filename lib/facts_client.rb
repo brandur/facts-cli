@@ -59,8 +59,8 @@ class FactsClient
     elsif @options.query && @arguments.count > 1
       $stderr.puts 'Query only supports a single argument'
       false
-    elsif @options.new && @arguments.count < 2 && @options.category && @options.parent
-      $stderr.puts 'New action must have at least two arguments'
+    elsif @options.new && @arguments.count < 1 && (@options.category && @options.parent || @options.fact)
+      $stderr.puts 'New action must have at least one argument'
       false
     elsif @options.edit && @arguments.count != 1 && @arguments.count != 2
       $stderr.puts 'Edit takes exactly one or two arguments'
@@ -84,7 +84,7 @@ class FactsClient
     puts 'OK'
   end
 
-  def edit_in_temp_file(str)
+  def edit_in_temp_file(str = '')
     temp_path = ''
     Tempfile.open('facts') do |f|
       f.puts str
@@ -135,10 +135,18 @@ class FactsClient
   def new_categories
     if @options.parent
       parent = Category.search_one(@arguments.first)
-      new_category_names = @arguments[1..@arguments.count]
+      if @arguments.count == 1
+        new_category_names = new_from_temp_file
+      else
+        new_category_names = @arguments[1..@arguments.count]
+      end
     else
       parent = nil
-      new_category_names = @arguments
+      if @arguments.count == 0
+        new_category_names = new_from_temp_file
+      else
+        new_category_names = @arguments
+      end
     end
     categories = []
     new_category_names.each do |c|
@@ -152,11 +160,20 @@ class FactsClient
 
   def new_facts
     category = Category.search_one(@arguments.first)
-    @arguments[1..@arguments.count].each do |f|
+    if @arguments.count == 1
+      new_facts = new_from_temp_file
+    else
+      new_facts = @arguments[1..@arguments.count]
+    end
+    new_facts.each do |f|
       fact = Fact.new(:content => f, :category_id => category.id)
       fact.save
       output_facts([fact])
     end
+  end
+
+  def new_from_temp_file
+    edit_in_temp_file.each.collect{ |l| l.strip }.find_all{ |l| !l.empty? }
   end
 
   def output_categories(categories)
