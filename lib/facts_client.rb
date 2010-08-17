@@ -159,6 +159,19 @@ class FactsClient
     end
   end
 
+  def output_categories(categories)
+    categories.each do |c|
+      puts "#{c.id} #{c.name} #{c.slug}"
+      output_facts(c.facts) if c.facts && c.facts.count > 0
+    end
+  end
+
+  def output_facts(facts)
+    facts.each do |f|
+      puts "* #{f.content} (#{f.id})"
+    end
+  end
+
   def output_help
     RDoc::usage # exits app
   end
@@ -185,7 +198,7 @@ class FactsClient
   end
 
   def query_categories
-    categories = Category.search_one_or_more(@arguments.first, @options.fact)
+    categories = Category.search_one_or_more(@arguments.first, :include_facts => @options.fact)
     output_categories(categories)
   end
 

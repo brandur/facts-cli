@@ -17,19 +17,19 @@ module RestfulRecord
       module_eval "def resource_name; '#{resource_name}'; end"
     end
 
-    def search(query, *args)
+    def search(query, options = {})
       RestHelper.get("/#{resource_name}/search.json", :query => query).collect{ |r| new(r) }
     end
 
-    def search_one(query, *args)
-      objs = search_one_or_more(query, args)
+    def search_one(query, options = {})
+      objs = search_one_or_more(query, options)
       #categories = categories.find_all{ |c| c.db_id == query || c.name == query }
       raise ImpreciseQueryError, "more than one object match for query '#{query}'" if objs.count > 1
       objs[0]
     end
 
-    def search_one_or_more(query, *args)
-      objs = search(query, args)
+    def search_one_or_more(query, options = {})
+      objs = search(query, options)
       raise ImpreciseQueryError, "no objects matched '#{query}'" if objs.count < 1
       objs
     end
