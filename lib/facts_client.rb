@@ -19,7 +19,7 @@ class FactsClient
 
   def run
     begin
-      if parsed_options? && arguments_valid?
+      if arguments_parsed? && arguments_valid?
         if @options.query && @options.category
           query_categories
         elsif @options.query && @options.fact
@@ -48,6 +48,23 @@ class FactsClient
   end
 
   private
+
+  def arguments_parsed?
+    opts = OptionParser.new
+    opts.on('-c', '--category')    { @options.category = true }
+    opts.on('-e', '--edit')        { @options.edit = true }
+    opts.on('-f', '--fact')        { @options.fact = true }
+    opts.on('-h', '--help')        { output_help }
+    opts.on('-m', '--move')        { @options.move = true }
+    opts.on('-n', '--new')         { @options.new = true }
+    opts.on('-p', '--parent')      { @options.parent = true }
+    opts.on('-q', '--query')       { @options.query = true }
+    opts.on('-V', '--verbose')     { @options.verbose = true }
+    opts.on('-v', '--version')     { output_version ; exit 0 }
+
+    opts.parse!(@arguments) rescue return false
+    true
+  end
 
   def arguments_valid?
     if !@options.query && !@options.new && !@options.edit && !@options.move
@@ -195,23 +212,6 @@ class FactsClient
 
   def output_version
     puts "facts client version #{VERSION}"
-  end
-
-  def parsed_options?
-    opts = OptionParser.new
-    opts.on('-c', '--category')    { @options.category = true }
-    opts.on('-e', '--edit')        { @options.edit = true }
-    opts.on('-f', '--fact')        { @options.fact = true }
-    opts.on('-h', '--help')        { output_help }
-    opts.on('-m', '--move')        { @options.move = true }
-    opts.on('-n', '--new')         { @options.new = true }
-    opts.on('-p', '--parent')      { @options.parent = true }
-    opts.on('-q', '--query')       { @options.query = true }
-    opts.on('-V', '--verbose')     { @options.verbose = true }
-    opts.on('-v', '--version')     { output_version ; exit 0 }
-
-    opts.parse!(@arguments) rescue return false
-    true
   end
 
   def query_categories
