@@ -16,6 +16,7 @@
 # == Options
 #
 # === Actions
+#   -d, --destroy    Delete categories or facts
 #   -e, --edit       Edit, for changing category names or fact content
 #   -m, --move       Move, for moving categories and facts between categories
 #   -n, --new        Create, for adding new categories and facts
