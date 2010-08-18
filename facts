@@ -45,10 +45,6 @@
 #
 #       facts -qf "warren buffett"
 #
-#   * Multiple patterns can be specified and will be treated as logical AND:
-#
-#       facts -qf apple "steve jobs"
-#
 # === New
 #   * Create a top-level category:
 #
@@ -68,7 +64,25 @@
 #
 #       facts -nf "politics" "Politicians are crooks"
 #
+#   * Categories or facts can be edited with $EDITOR by leaving off all "new" 
+#     arguments:
+#
+#       facts -npc "politics"
+#
 # === Edit
+#   * Edit a category name by specifying a search string followed by the new 
+#     name:
+#
+#       facts -ec politics "Global Politics"
+#
+#   * Same for facts but with content:
+#
+#       facts -ef crooks "Politicians are lovely people"
+#
+#   * Leave off the second argument to edit the new name/content with $EDITOR: 
+#
+#       facts -ec politics
+#       facts -ef crooks
 #
 # === Move
 #   * Move one category to another (all arguments should be queries that will 
@@ -84,6 +98,13 @@
 #   * Facts are moved in the same fashion:
 #
 #       facts -mf "biology is the study of" biology
+#
+# === Destroy
+#   * Destroy facts or categories by specifying a series of search strings 
+#     (each of which matches exactly one fact or category):
+#
+#       facts -dc ruby
+#       facts -df apple "steve jobs"
 #
 # == Author
 #
