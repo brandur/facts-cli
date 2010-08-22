@@ -6,6 +6,7 @@ require 'rest_client'
 
 require 'lib/category'
 require 'lib/fact'
+require 'lib/rest_helper'
 require 'lib/restful_record'
 
 class FactsClient
@@ -20,29 +21,8 @@ class FactsClient
   def run
     begin
       if arguments_parsed? && arguments_valid?
-        if @options.query && @options.category
-          query_categories
-        elsif @options.query && @options.fact
-          query_facts
-        elsif @options.new && @options.category
-          new_categories
-        elsif @options.new && @options.fact
-          new_facts
-        elsif @options.edit && @options.category
-          edit_category
-        elsif @options.edit && @options.fact
-          edit_fact
-        elsif @options.move && @options.category
-          move_categories
-        elsif @options.move && @options.fact
-          move_facts
-        elsif @options.destroy && @options.category
-          destroy_categories
-        elsif @options.destroy && @options.fact
-          destroy_facts
-        end
-      else
-        #output_help
+        RestHelper.login, RestHelper.password = @options.login, @options.password if @options.login
+        send("#{@options.action}_#{@options.mode}")
       end
     rescue RestfulRecord::ImpreciseQueryError, NoEditorError
       $stderr.puts "#{$!}"
@@ -55,15 +35,29 @@ class FactsClient
 
   def arguments_parsed?
     opts = OptionParser.new
-    opts.on('-c', '--category')    { @options.category = true }
-    opts.on('-d', '--destroy')     { @options.destroy = true }
-    opts.on('-e', '--edit')        { @options.edit = true }
-    opts.on('-f', '--fact')        { @options.fact = true }
+    # Actions
+    opts.on('-d', '--destroy')     { @options.action = :destroy }
+    opts.on('-e', '--edit')        { @options.action = :edit }
+    opts.on('-m', '--move')        { @options.action = :move }
+    opts.on('-n', '--new')         { @options.action = :new }
+    opts.on('-q', '--query')       { @options.action = :query }
+
+    # Modes
+    opts.on('-c', '--category')    { @options.mode = :category }
+    opts.on('-f', '--fact')        { @options.mode = :fact }
+
+    # Authentication
+    opts.on('-l', '--login <login>', String) do |l|
+      @options.login = l
+    end
+    opts.on('-P', '--password <password>', String) do |p|
+      @options.password = p
+    end
+    opts.on('-s', '--save-auth')   { @options.save_auth = true }
+
+    # Miscellaneous
     opts.on('-h', '--help')        { output_help }
-    opts.on('-m', '--move')        { @options.move = true }
-    opts.on('-n', '--new')         { @options.new = true }
     opts.on('-p', '--parent')      { @options.parent = true }
-    opts.on('-q', '--query')       { @options.query = true }
     opts.on('-V', '--verbose')     { @options.verbose = true }
     opts.on('-v', '--version')     { output_version ; exit 0 }
 
@@ -72,25 +66,31 @@ class FactsClient
   end
 
   def arguments_valid?
-    if !@options.query && !@options.new && !@options.edit && !@options.move && !@options.destroy
+    if @options.save && (!@options.login || !@options.password)
+      $stderr.puts 'Save flag only meaningful if login/password is supplied'
+      false
+    elsif (@options.login && !@options.password) || (@options.password && !@options.login)
+      $stderr.puts 'Both login and password must be specified'
+      false
+    elsif @options.action.nil?
       $stderr.puts 'An action must be specificied (e.g. query, new, ..)'
       false
-    elsif !@options.category && !@options.fact
+    elsif @options.mode.nil?
       $stderr.puts 'A mode must be specified (e.g. category or fact)'
       false
-    elsif @options.query && @arguments.count > 1
+    elsif @options.action == :query && @arguments.count > 1
       $stderr.puts 'Query only supports a single argument'
       false
-    elsif @options.new && @arguments.count < 1 && (@options.category && @options.parent || @options.fact)
+    elsif @options.action == :new && @arguments.count < 1 && (@options.mode == :category && @options.parent || @options.mode == :fact)
       $stderr.puts 'New action must have at least one argument'
       false
-    elsif @options.edit && @arguments.count != 1 && @arguments.count != 2
+    elsif @options.action == :edit && @arguments.count != 1 && @arguments.count != 2
       $stderr.puts 'Edit takes exactly one or two arguments'
       false
-    elsif @options.move && @arguments.count < 2
+    elsif @options.action == :move && @arguments.count < 2
       $stderr.puts 'Move action must have at least two arguments'
       false
-    elsif @options.destroy && @arguments.count < 1
+    elsif @options.action == :destroy && @arguments.count < 1
       $stderr.puts 'Destroy action must have at least one argument'
       false
     else
@@ -98,7 +98,7 @@ class FactsClient
     end
   end
 
-  def destroy_categories
+  def destroy_category
     @arguments.each do |c|
       category = Category.search_one(c)
       category.destroy
@@ -106,7 +106,7 @@ class FactsClient
     puts 'OK'
   end
 
-  def destroy_facts
+  def destroy_fact
     @arguments.each do |f|
       fact = Fact.search_one(f)
       fact.destroy
@@ -153,7 +153,7 @@ class FactsClient
     puts 'OK'
   end
 
-  def move_categories
+  def move_category
     destination = Category.search_one(@arguments.last)
     @arguments[0..@arguments.count-2].each do |c|
       category = Category.search_one(c)
@@ -163,7 +163,7 @@ class FactsClient
     puts 'OK'
   end
 
-  def move_facts
+  def move_fact
     destination = Category.search_one(@arguments.last)
     @arguments[0..@arguments.count-2].each do |f|
       fact = Fact.search_one(f)
@@ -173,7 +173,7 @@ class FactsClient
     puts 'OK'
   end
 
-  def new_categories
+  def new_category
     if @options.parent
       parent = Category.search_one(@arguments.first)
       if @arguments.count == 1
@@ -199,7 +199,7 @@ class FactsClient
     output_categories(categories)
   end
 
-  def new_facts
+  def new_fact
     category = Category.search_one(@arguments.first)
     if @arguments.count == 1
       new_facts = new_from_temp_file
@@ -238,12 +238,12 @@ class FactsClient
     puts "facts client version #{VERSION}"
   end
 
-  def query_categories
+  def query_category
     categories = Category.search_one_or_more(@arguments.first, :include_facts => @options.fact)
     output_categories(categories)
   end
 
-  def query_facts
+  def query_fact
     facts = Fact.search_one_or_more(@arguments.first)
     output_facts(facts)
   end
