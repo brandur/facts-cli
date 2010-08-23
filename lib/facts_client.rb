@@ -21,9 +21,10 @@ class FactsClient
 
   def run
     begin
-      file_options = read_config_file
-      @options = OpenStruct.new(file_options)
       if arguments_parsed? && arguments_valid?
+        puts "Reading configuration file #{FactsConfig}" if @options.verbose
+        file_options = read_config_file
+        @options = OpenStruct.new(@options.marshal_dump.merge(file_options))
         RestHelper.user, RestHelper.password = @options.user, @options.password if @options.user
         send("#{@options.action}_#{@options.mode}")
         write_config_file(file_options)
@@ -40,6 +41,7 @@ class FactsClient
   def arguments_parsed?
     opts = OptionParser.new
     # Actions
+    opts.on('-a', '--daily')       { @options.action = :daily }
     opts.on('-d', '--destroy')     { @options.action = :destroy }
     opts.on('-e', '--edit')        { @options.action = :edit }
     opts.on('-m', '--move')        { @options.action = :move }
@@ -99,6 +101,16 @@ class FactsClient
     else
       true
     end
+  end
+
+  def daily_category
+    categories = Category.daily
+    output_categories(categories)
+  end
+
+  def daily_fact
+    facts = Fact.daily
+    output_facts(facts)
   end
 
   def destroy_category
@@ -249,7 +261,6 @@ class FactsClient
 
   def read_config_file
     if File.exists?(FactsConfig)
-      puts "Reading configuration file #{FactsConfig}"
       JSON.parse(IO.read(FactsConfig))
     else
       {}

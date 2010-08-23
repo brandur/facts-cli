@@ -8,6 +8,10 @@ module RestfulRecord
   end
 
   module ClassMethods
+    def daily(options = {})
+      RestHelper.get("/#{resource_name}/daily.json", options).collect { |r| new(r) }
+    end
+
     def find(id)
       new(RestHelper.get("/#{resource_name}/#{id}.json"))
     end

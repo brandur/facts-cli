@@ -16,6 +16,7 @@
 # == Options
 #
 # === Actions
+#   -a, --daily      Get daily digest
 #   -d, --destroy    Delete categories or facts
 #   -e, --edit       Edit, for changing category names or fact content
 #   -m, --move       Move, for moving categories and facts between categories
@@ -26,11 +27,15 @@
 #   -c, --category   Carries out an action on a category
 #   -f, --fact       Carries out an action on a fact
 #
+# === Authentication
+#   -U, --user       Sets the user to use for authentication
+#   -P, --password   Sets the password to use for authentication
+#   -s, --save-auth  Save the supplied credentials to ~/.factsrc
+#
 # === Miscellaneous
 #   -h, --help       Displays help message
 #   -p, --parent     Specifies that a new category should have a parent
-#   -V, --verbose    Starts the program in verbose modew
-#   -v, --version    Displays version
+#   -v, --verbose    Starts the program in verbose modew
 #
 # == Examples
 #
@@ -112,4 +117,7 @@
 #
 
 require 'rubygems'
+require 'bundler'
+Bundler.setup
+
 require 'lib/facts_client'
