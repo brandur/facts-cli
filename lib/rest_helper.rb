@@ -11,13 +11,9 @@ class RestHelper
       parse(get_resource(relative_uri).get(:params => params))
     end
 
-    def login=(val)
-      @@login = val
-    end
-
     def get_resource(relative_uri)
-      if defined?(@@login)
-        RestClient::Resource.new "#{FactsUri}#{relative_uri}", @@login, @@password
+      if defined?(@@user)
+        RestClient::Resource.new "#{FactsUri}#{relative_uri}", @@user, @@password
       else
         RestClient::Resource.new "#{FactsUri}#{relative_uri}"
       end
@@ -41,6 +37,10 @@ class RestHelper
 
     def put(relative_uri, params = {})
       parse(get_resource(relative_uri).put(params))
+    end
+
+    def user=(val)
+      @@user = val
     end
   end
 end

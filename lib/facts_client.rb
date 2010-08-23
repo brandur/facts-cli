@@ -1,3 +1,4 @@
+require 'etc'
 require 'json'
 require 'optparse'
 require 'ostruct'
@@ -10,7 +11,7 @@ require 'lib/rest_helper'
 require 'lib/restful_record'
 
 class FactsClient
-  Version = '0.1'
+  FactsConfig = File.join(Etc.getpwuid.dir, '.factsrc')
 
   def initialize(arguments, stdin)
     @arguments = arguments
@@ -20,9 +21,12 @@ class FactsClient
 
   def run
     begin
+      file_options = read_config_file
+      @options = OpenStruct.new(file_options)
       if arguments_parsed? && arguments_valid?
-        RestHelper.login, RestHelper.password = @options.login, @options.password if @options.login
+        RestHelper.user, RestHelper.password = @options.user, @options.password if @options.user
         send("#{@options.action}_#{@options.mode}")
+        write_config_file(file_options)
       end
     rescue RestfulRecord::ImpreciseQueryError, NoEditorError
       $stderr.puts "#{$!}"
@@ -47,8 +51,8 @@ class FactsClient
     opts.on('-f', '--fact')        { @options.mode = :fact }
 
     # Authentication
-    opts.on('-l', '--login <login>', String) do |l|
-      @options.login = l
+    opts.on('-U', '--user <user>', String) do |u|
+      @options.user = u
     end
     opts.on('-P', '--password <password>', String) do |p|
       @options.password = p
@@ -58,19 +62,18 @@ class FactsClient
     # Miscellaneous
     opts.on('-h', '--help')        { output_help }
     opts.on('-p', '--parent')      { @options.parent = true }
-    opts.on('-V', '--verbose')     { @options.verbose = true }
-    opts.on('-v', '--version')     { output_version ; exit 0 }
+    opts.on('-v', '--verbose')     { @options.verbose = true }
 
     opts.parse!(@arguments) rescue return false
     true
   end
 
   def arguments_valid?
-    if @options.save && (!@options.login || !@options.password)
-      $stderr.puts 'Save flag only meaningful if login/password is supplied'
+    if @options.save && (!@options.user || !@options.password)
+      $stderr.puts 'Save flag only meaningful if user/password is supplied'
       false
-    elsif (@options.login && !@options.password) || (@options.password && !@options.login)
-      $stderr.puts 'Both login and password must be specified'
+    elsif (@options.user && !@options.password) || (@options.password && !@options.user)
+      $stderr.puts 'Both user and password must be specified'
       false
     elsif @options.action.nil?
       $stderr.puts 'An action must be specificied (e.g. query, new, ..)'
@@ -234,10 +237,6 @@ class FactsClient
     RDoc::usage # exits app
   end
 
-  def output_version
-    puts "facts client version #{VERSION}"
-  end
-
   def query_category
     categories = Category.search_one_or_more(@arguments.first, :include_facts => @options.fact)
     output_categories(categories)
@@ -246,6 +245,27 @@ class FactsClient
   def query_fact
     facts = Fact.search_one_or_more(@arguments.first)
     output_facts(facts)
+  end
+
+  def read_config_file
+    if File.exists?(FactsConfig)
+      puts "Reading configuration file #{FactsConfig}"
+      JSON.parse(IO.read(FactsConfig))
+    else
+      {}
+    end
+  end
+
+  def write_config_file(file_options)
+    if @options.save_auth
+      file_options['user'] = @options.user
+      file_options['password'] = @options.password
+      File.open FactsConfig, 'w' do |f|
+        f.write(file_options.to_json)
+      end
+      puts "User authentication written to #{FactsConfig}, it contains " + 
+           "your password so check its permissions"
+    end
   end
 
   class NoEditorChangeError < RuntimeError
