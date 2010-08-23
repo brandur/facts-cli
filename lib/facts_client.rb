@@ -237,19 +237,28 @@ class FactsClient
 
   def output_categories(categories)
     categories.each do |c|
-      puts "#{c.id} #{c.name} #{c.slug}"
-      output_facts(c.facts) if c.facts && c.facts.count > 0
+      if @options.basic
+        puts "#{c.name} #{c.id} #{c.slug}"
+      else
+        puts "#{@c.bold { c.name } } #{@c.yellow { c.id.to_s } } #{@c.on_red { c.slug}}"
+        puts "#{(0...c.name.length).collect{ '=' }.join}"
+      end
+      if c.facts && c.facts.count > 0
+        output_facts(c.facts)
+      else
+        puts ''
+      end
     end
   end
 
-  def output_facts(facts, stand_alone = false)
+  def output_facts(facts, standalone = false)
     puts ''
     facts.each do |f|
       if @options.basic
         puts "* #{f.content} (#{f.id})"
       else
         f.content = parse_markdown(f.content)
-        puts "#{@c.green { '*' }} #{f.content} #{@c.yellow { f.id.to_s }} #{@c.on_red { f.category.slug }}"
+        puts "#{@c.green { '*' }} #{f.content} #{@c.yellow { f.id.to_s }} #{@c.on_red { f.category.slug } if standalone}"
         puts ''
       end
     end
@@ -265,7 +274,7 @@ class FactsClient
   end
 
   def query_category
-    categories = Category.search_one_or_more(@arguments.first, :include_facts => @options.fact)
+    categories = Category.search_one_or_more(@arguments.first, :include_facts => true)
     output_categories(categories)
   end
 
