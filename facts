@@ -33,6 +33,7 @@
 #   -s, --save-auth  Save the supplied credentials to ~/.factsrc
 #
 # === Miscellaneous
+#   -b, --basic      Don't use any fancy terminal formatting for output
 #   -h, --help       Displays help message
 #   -p, --parent     Specifies that a new category should have a parent
 #   -v, --verbose    Starts the program in verbose modew

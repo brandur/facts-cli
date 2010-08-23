@@ -4,6 +4,7 @@ require 'optparse'
 require 'ostruct'
 require 'rdoc/usage'
 require 'rest_client'
+require 'term/ansicolor'
 
 require 'lib/category'
 require 'lib/fact'
@@ -15,6 +16,7 @@ class FactsClient
 
   def initialize(arguments, stdin)
     @arguments = arguments
+    @c = Term::ANSIColor
     @stdin = stdin
     @options = OpenStruct.new
   end
@@ -41,16 +43,16 @@ class FactsClient
   def arguments_parsed?
     opts = OptionParser.new
     # Actions
-    opts.on('-a', '--daily')       { @options.action = :daily }
-    opts.on('-d', '--destroy')     { @options.action = :destroy }
-    opts.on('-e', '--edit')        { @options.action = :edit }
-    opts.on('-m', '--move')        { @options.action = :move }
-    opts.on('-n', '--new')         { @options.action = :new }
-    opts.on('-q', '--query')       { @options.action = :query }
+    opts.on('-a', '--daily')         { @options.action = :daily }
+    opts.on('-d', '--destroy')       { @options.action = :destroy }
+    opts.on('-e', '--edit')          { @options.action = :edit }
+    opts.on('-m', '--move')          { @options.action = :move }
+    opts.on('-n', '--new')           { @options.action = :new }
+    opts.on('-q', '--query')         { @options.action = :query }
 
     # Modes
-    opts.on('-c', '--category')    { @options.mode = :category }
-    opts.on('-f', '--fact')        { @options.mode = :fact }
+    opts.on('-c', '--category')      { @options.mode = :category }
+    opts.on('-f', '--fact')          { @options.mode = :fact }
 
     # Authentication
     opts.on('-U', '--user <user>', String) do |u|
@@ -59,12 +61,13 @@ class FactsClient
     opts.on('-P', '--password <password>', String) do |p|
       @options.password = p
     end
-    opts.on('-s', '--save-auth')   { @options.save_auth = true }
+    opts.on('-s', '--save-auth')     { @options.save_auth = true }
 
     # Miscellaneous
-    opts.on('-h', '--help')        { output_help }
-    opts.on('-p', '--parent')      { @options.parent = true }
-    opts.on('-v', '--verbose')     { @options.verbose = true }
+    opts.on('-b', '--basic')         { @options.basic = true }
+    opts.on('-h', '--help')          { output_help }
+    opts.on('-p', '--parent')        { @options.parent = true }
+    opts.on('-v', '--verbose')       { @options.verbose = true }
 
     opts.parse!(@arguments) rescue return false
     true
@@ -110,7 +113,7 @@ class FactsClient
 
   def daily_fact
     facts = Fact.daily
-    output_facts(facts)
+    output_facts(facts, true)
   end
 
   def destroy_category
@@ -239,14 +242,26 @@ class FactsClient
     end
   end
 
-  def output_facts(facts)
+  def output_facts(facts, stand_alone = false)
+    puts ''
     facts.each do |f|
-      puts "* #{f.content} (#{f.id})"
+      if @options.basic
+        puts "* #{f.content} (#{f.id})"
+      else
+        f.content = parse_markdown(f.content)
+        puts "#{@c.green { '*' }} #{f.content} #{@c.yellow { f.id.to_s }} #{@c.on_red { f.category.slug }}"
+        puts ''
+      end
     end
   end
 
   def output_help
     RDoc::usage # exits app
+  end
+
+  def parse_markdown(str)
+    str = str.gsub(/\*\*(.*?)\*\*/, @c.bold('\1'))
+    str = str.gsub(/_(.*?)_/, @c.underscore('\1'))
   end
 
   def query_category
@@ -256,7 +271,7 @@ class FactsClient
 
   def query_fact
     facts = Fact.search_one_or_more(@arguments.first)
-    output_facts(facts)
+    output_facts(facts, true)
   end
 
   def read_config_file
