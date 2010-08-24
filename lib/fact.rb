@@ -1,4 +1,4 @@
-require 'lib/restful_record'
+require 'restful_record'
 
 class Fact
   include RestfulRecord

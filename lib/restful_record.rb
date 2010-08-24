@@ -1,4 +1,4 @@
-require 'lib/rest_helper'
+require 'rest_helper'
 
 module RestfulRecord
   attr_accessor :id
