@@ -121,7 +121,7 @@ class FactsClient
       category = Category.search_one(c)
       category.destroy
     end
-    puts 'OK'
+    output_ok
   end
 
   def destroy_fact
@@ -129,7 +129,7 @@ class FactsClient
       fact = Fact.search_one(f)
       fact.destroy
     end
-    puts 'OK'
+    output_ok
   end
 
   def edit_category
@@ -140,7 +140,7 @@ class FactsClient
       category.name = @arguments.last
     end
     category.save
-    puts 'OK'
+    output_ok
   end
 
   def edit_in_temp_file(str = '')
@@ -168,7 +168,7 @@ class FactsClient
       fact.content = @arguments.last
     end
     fact.save
-    puts 'OK'
+    output_ok
   end
 
   def move_category
@@ -178,7 +178,7 @@ class FactsClient
       category.category_id = destination.id
       category.save
     end
-    puts 'OK'
+    output_ok
   end
 
   def move_fact
@@ -188,7 +188,7 @@ class FactsClient
       fact.category_id = destination.id
       fact.save
     end
-    puts 'OK'
+    output_ok
   end
 
   def new_category
@@ -240,8 +240,7 @@ class FactsClient
       if @options.basic
         puts "#{c.name} #{c.id} #{c.slug}"
       else
-        puts "#{@c.bold { c.name } } #{@c.yellow { c.id.to_s } } #{@c.on_red { c.slug}}"
-        puts "#{(0...c.name.length).collect{ '=' }.join}"
+        puts "#{@c.underscore{ @c.bold{ c.name } } } #{@c.yellow{ c.id.to_s } } #{@c.on_red{ c.slug}}"
       end
       if c.facts && c.facts.count > 0
         output_facts(c.facts)
@@ -252,13 +251,12 @@ class FactsClient
   end
 
   def output_facts(facts, standalone = false)
-    puts ''
     facts.each do |f|
       if @options.basic
         puts "* #{f.content} (#{f.id})"
       else
         f.content = parse_markdown(f.content)
-        puts "#{@c.green { '*' }} #{f.content} #{@c.yellow { f.id.to_s }} #{@c.on_red { f.category.slug } if standalone}"
+        puts "#{@c.green{ '*' }} #{f.content} #{@c.yellow{ f.id.to_s }} #{@c.on_red{ f.category.slug } if standalone}"
         puts ''
       end
     end
@@ -268,9 +266,13 @@ class FactsClient
     RDoc::usage # exits app
   end
 
+  def output_ok
+    puts "[ #{@c.green{ 'OK' }} ]"
+  end
+
   def parse_markdown(str)
-    str = str.gsub(/\*\*(.*?)\*\*/, @c.bold('\1'))
-    str = str.gsub(/_(.*?)_/, @c.underscore('\1'))
+    str = str.gsub(/ \*\*(.*?)\*\* /, @c.bold('\1'))
+    str = str.gsub(/ _(.*?)_ /, @c.underscore('\1'))
   end
 
   def query_category

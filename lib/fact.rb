@@ -15,6 +15,8 @@ class Fact
   end
 
   def to_json
-    { :fact => { :id => @id, :category_id => @category_id, :content => @content } }
+    x = { :fact => { :id => @id, :category_id => @category_id, :content => @content } }
+    puts "to_json = #{x.inspect}"
+    x
   end
 end
