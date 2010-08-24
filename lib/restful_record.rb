@@ -28,8 +28,11 @@ module RestfulRecord
 
     def search_one(query, options = {})
       objs = search_one_or_more(query, options)
-      #categories = categories.find_all{ |c| c.db_id == query || c.name == query }
-      raise ImpreciseQueryError, "more than one object match for query '#{query}'" if objs.count > 1
+
+      # If we got back more than one, try to refine search with an exact match 
+      # only
+      objs = objs.find_all{ |o| o.id.to_s == query } if objs.count > 1
+      raise ImpreciseQueryError, "more than one object match for query '#{query}'" if objs.count != 1
       objs[0]
     end
 
