@@ -10,11 +10,11 @@ require 'category'
 require 'fact'
 
 class FactsClient
+  C = Term::ANSIColor
   FactsConfig = File.join(Etc.getpwuid.dir, '.factsrc')
 
   def initialize(arguments)
     @arguments = arguments
-    @c = Term::ANSIColor
     @options = OpenStruct.new
   end
 
@@ -235,7 +235,7 @@ class FactsClient
       if @options.basic
         puts "#{c.name} #{c.id} #{c.slug}"
       else
-        puts "#{@c.underscore{ @c.bold{ c.name } } } #{@c.yellow{ c.id.to_s } } #{@c.on_red{ c.slug}}"
+        puts "#{C.underscore{ C.bold{ c.name } } } #{C.yellow{ c.id.to_s } } #{C.on_red{ c.slug}}"
       end
       if c.facts && c.facts.count > 0
         output_facts(c.facts)
@@ -251,7 +251,7 @@ class FactsClient
         puts "* #{f.content} (#{f.id})"
       else
         f.content = parse_markdown(f.content)
-        puts "#{@c.green{ '*' }} #{f.content} #{@c.yellow{ f.id.to_s }} #{@c.on_red{ f.category.slug } if standalone}"
+        puts "#{C.green{ '*' }} #{f.content} #{C.yellow{ f.id.to_s }} #{C.on_red{ f.category.slug } if standalone}"
         puts ''
       end
     end
@@ -262,12 +262,12 @@ class FactsClient
   end
 
   def output_ok
-    puts "[ #{@c.green{ 'OK' }} ]"
+    puts "[ #{C.green{ 'OK' }} ]"
   end
 
   def parse_markdown(str)
-    str = str.gsub(/\*\*(.*?)\*\*/, @c.bold('\1'))
-    str = str.gsub(/_(.*?)_/, @c.underscore('\1'))
+    str = str.gsub(/\*\*(.*?)\*\*/, C.bold('\1'))
+    str = str.gsub(/_(.*?)_/, C.underscore('\1'))
   end
 
   def query_category
