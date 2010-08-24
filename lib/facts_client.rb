@@ -6,36 +6,31 @@ require 'rdoc/usage'
 require 'rest_client'
 require 'term/ansicolor'
 
-require 'lib/category'
-require 'lib/fact'
-require 'lib/rest_helper'
-require 'lib/restful_record'
+require 'category'
+require 'fact'
 
 class FactsClient
   FactsConfig = File.join(Etc.getpwuid.dir, '.factsrc')
 
-  def initialize(arguments, stdin)
+  def initialize(arguments)
     @arguments = arguments
     @c = Term::ANSIColor
-    @stdin = stdin
     @options = OpenStruct.new
   end
 
   def run
-    begin
-      if arguments_parsed? && arguments_valid?
-        puts "Reading configuration file #{FactsConfig}" if @options.verbose
-        file_options = read_config_file
-        @options = OpenStruct.new(@options.marshal_dump.merge(file_options))
-        RestHelper.user, RestHelper.password = @options.user, @options.password if @options.user
-        send("#{@options.action}_#{@options.mode}")
-        write_config_file(file_options)
-      end
-    rescue RestfulRecord::ImpreciseQueryError, NoEditorError
-      $stderr.puts "#{$!}"
-    rescue NoEditorChangeError
-      puts "#{$!}"
+    if arguments_parsed? && arguments_valid?
+      puts "Reading configuration file #{FactsConfig}" if @options.verbose
+      file_options = read_config_file
+      @options = OpenStruct.new(@options.marshal_dump.merge(file_options))
+      RestHelper.user, RestHelper.password = @options.user, @options.password if @options.user
+      send("#{@options.action}_#{@options.mode}")
+      write_config_file(file_options)
     end
+  rescue RestfulRecord::ImpreciseQueryError, NoEditorError
+    $stderr.puts "#{$!}"
+  rescue NoEditorChangeError
+    puts "#{$!}"
   end
 
   private
@@ -271,8 +266,8 @@ class FactsClient
   end
 
   def parse_markdown(str)
-    str = str.gsub(/ \*\*(.*?)\*\* /, @c.bold('\1'))
-    str = str.gsub(/ _(.*?)_ /, @c.underscore('\1'))
+    str = str.gsub(/\*\*(.*?)\*\*/, @c.bold('\1'))
+    str = str.gsub(/_(.*?)_/, @c.underscore('\1'))
   end
 
   def query_category
@@ -311,7 +306,4 @@ class FactsClient
   class NoEditorError < RuntimeError
   end
 end
-
-app = FactsClient.new(ARGV, STDIN)
-app.run
 

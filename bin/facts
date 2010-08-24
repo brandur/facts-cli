@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 # == Synopsis
 #
@@ -44,8 +44,6 @@
 #   * Query for category information matching a specific pattern:
 #
 #       facts -qc ruby
-#
-#       facts -qfc apple (include facts in those categories)
 #
 #   * Query for facts that have content matching a specific pattern:
 #
@@ -121,4 +119,9 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
-require 'lib/facts_client'
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
+require 'facts_client'
+
+app = FactsClient.new(ARGV)
+app.run
+
