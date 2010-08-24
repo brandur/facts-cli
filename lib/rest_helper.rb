@@ -1,6 +1,6 @@
 class RestHelper
-  #FactsUri = 'http://facts.brandur.org'
-  FactsUri = 'http://localhost:3000'
+  FactsUri = 'http://facts.brandur.org'
+  #FactsUri = 'http://localhost:3000'
 
   class << self
     def delete(relative_uri)
