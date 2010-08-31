@@ -115,10 +115,6 @@
 #   Brandur Leach (brandur@mutelight.org)
 #
 
-require 'rubygems'
-require 'bundler'
-Bundler.setup
-
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 require 'facts_client'
 
