@@ -2,7 +2,6 @@ require 'etc'
 require 'json'
 require 'optparse'
 require 'ostruct'
-require 'rdoc/usage'
 require 'rest_client'
 require 'term/ansicolor'
 
@@ -227,7 +226,7 @@ class FactsClient
   end
 
   def new_from_temp_file
-    edit_in_temp_file.each.collect{ |l| l.strip }.find_all{ |l| !l.empty? }
+    edit_in_temp_file.each_line.collect{ |l| l.strip }.find_all{ |l| !l.empty? }
   end
 
   def output_categories(categories)
@@ -259,6 +258,8 @@ class FactsClient
 
   def output_help
     RDoc::usage # exits app
+    puts "Usage: facts <action> <entity> <args>"
+    exit
   end
 
   def output_ok
