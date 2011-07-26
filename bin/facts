@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+# @todo: move to README
+#
 # == Synopsis
 #
 #   A simple fact-keeping application.
@@ -115,9 +117,17 @@
 #   Brandur Leach (brandur@mutelight.org)
 #
 
-$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
-require 'facts_client'
+require 'facts'
+require 'facts/cli'
 
-app = FactsClient.new(ARGV)
-app.run
+begin
+  Facts::CLI.start
+rescue Facts::FactsError => e
+  Facts.ui.error e.message
+  Facts.ui.debug e.backtrace.join("\n")
+  exit e.status_code
+rescue Interrupt => e
+  Facts.ui.error "\nQuitting..."
+  exit 1
+end
 
