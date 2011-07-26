@@ -53,21 +53,15 @@ The following tasks are available:
 
 Query for category information matching a specific pattern:
 
-```
-facts qc ruby
-```
+```facts qc ruby```
 
 Query for a category by ID:
 
-```
-facts qc 123
-```
+```facts qc 123```
 
 Query for facts that have content matching a specific pattern:
 
-```
-facts qf "warren buffett"
-```
+```facts qf "warren buffett"```
 
 Query for facts that match _warren_ and _finance_:
 
