@@ -323,11 +323,11 @@ module Facts
 
     def output_categories(categories)
       categories.each do |c|
-        puts "#{C.underscore{ C.bold{ c.name } } } #{C.yellow{ c.id.to_s } } #{C.on_red{ c.slug}}"
+        Facts.ui.puts "#{C.underscore{ C.bold{ c.name } } } #{C.yellow{ c.id.to_s } } #{C.on_red{ c.slug}}"
         if c.facts && c.facts.count > 0
           output_facts(c.facts)
         else
-          puts ''
+          Facts.ui.puts ''
         end
       end
     end
@@ -341,7 +341,7 @@ module Facts
     end
 
     def output_ok
-      puts "[ #{C.green{ 'OK' }} ]"
+      Facts.ui.puts "[ #{C.green{ 'OK' }} ]"
     end
 
     # Best effort to parse some Markdown for display in a terminal.
